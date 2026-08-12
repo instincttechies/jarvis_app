@@ -1,0 +1,55 @@
+name: Populate GiffyShare Gallery
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  gallery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download gallery sample photos
+        shell: bash
+        run: |
+          set -euo pipefail
+          download() {
+            folder="$1"; file="$2"; query="$3"; lock="$4"
+            mkdir -p "gallery/$folder"
+            curl -fL --retry 3 --retry-delay 2 "https://loremflickr.com/1200/800/${query}?lock=${lock}" -o "gallery/$folder/$file.jpg"
+          }
+
+          download birthday kid-birthday "birthday,kid,cake" 101
+          download birthday couple-birthday "birthday,couple,cake" 102
+          download birthday old-couple-birthday "elderly,couple,birthday" 103
+          download birthday birthday-party "birthday,party,cake" 104
+
+          download weddings wedding-couple "wedding,couple" 201
+          download weddings wedding-rings "wedding,rings" 202
+          download weddings wedding-venue "wedding,venue" 203
+          download weddings wedding-family "wedding,family" 204
+
+          download family family-park "family,park" 301
+          download family multigenerational-family "family,grandparents" 302
+          download family siblings "siblings,children" 303
+          download family family-celebration "family,celebration" 304
+
+          download travel mountain-lake "mountain,lake,travel" 401
+          download travel tropical-beach "beach,tropical,travel" 402
+          download travel hot-air-balloons "hotairballoon,travel" 403
+          download travel scenic-sunset "sunset,mountains,travel" 404
+
+      - name: Commit gallery photos
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gallery
+          git diff --cached --quiet && exit 0
+          git commit -m "Add GiffyShare gallery sample photos"
+          git push
